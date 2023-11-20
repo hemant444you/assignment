@@ -16,6 +16,7 @@ class CreateBucketsTable extends Migration
             $table->string('name');
             $table->float('volume');
             $table->float('space');
+            $table->string('status');
             $table->timestamps();
         });
     }

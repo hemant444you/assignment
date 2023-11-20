@@ -30,6 +30,7 @@ class BucketController extends Controller
         $bucket = new Bucket();
         if($request->id != ''){
             $bucket = Bucket::where('id',$request->id)->first();
+            $bucket->space = $bucket->space;
             if($request->name == $bucket->name){
                 $rules = [
                     'name'    => 'required',
@@ -48,6 +49,7 @@ class BucketController extends Controller
         }
         $bucket->name = $request->name;
         $bucket->volume = $request->volume;
+        $bucket->status = 'New';
         $bucket->save();
 
         return redirect()->route('bucket.index')->with('success',$msg);

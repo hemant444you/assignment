@@ -36,36 +36,47 @@ class HomeController extends Controller
             $balls_volume = $balls_volume + $ball_volume;
         }
 
-        if($balls_volume > $bucket_volume){
-            return redirect()->back()->with('error','Ball Volume is more than Bucket volume');
-        }
+        // if($balls_volume > $bucket_volume){
+        //     return redirect()->back()->with('error','Ball Volume is more than Bucket volume');
+        // }
 
-        $buckets = Bucket::where('user_id',Auth::User()->id)->get();
+        $buckets = Bucket::where('user_id',Auth::User()->id)->orderBy('space','desc')->get();
         foreach($buckets as $bucket){
             $bucket->space = $bucket->volume;
             $bucket->save();
         }
-
+        $error = '';
+        $error_msg = '';
         foreach($request->ball_id as $key => $id){
             $ball = Ball::find($id);
             $ball_buckets = BallBucket::where('ball_id',$ball->id)->get();
-            foreach($ball_buckets as $bucket){
-                $bucket->delete();
+            foreach($ball_buckets as $ball_bucket){
+                $ball_bucket->delete();
             }
             $quantity = $request->quantity[$key];
             if($quantity > 0){
-                $this->fill_balls($ball, $quantity);
+                $msg = $this->fill_balls($ball, $quantity);
+                if($msg){
+                    $error = 'yes';
+                }
+                $error_msg = $error_msg .' '. $msg;
             }
         }
-
+        if($error == 'yes'){
+            return redirect()->back()->with('error',$error_msg. ' can not fill');
+        }
         return redirect()->route('home')->with('success','Balls occupied successfully');
+
     }
 
     public function fill_balls($ball, $quantity)
     {
-        $bucket = Bucket::where('user_id',Auth::User()->id)->where('space', '>=', $ball->volume)->orderBy('space','desc')->first();
+        $bucket = Bucket::where('user_id',Auth::User()->id)->where('space', '>=', $ball->volume)->where('status','Used')->orderBy('space','desc')->first();
         if(!$bucket){
-            return;
+            $bucket = Bucket::where('user_id',Auth::User()->id)->where('space', '>=', $ball->volume)->orderBy('space','desc')->first();
+        }
+        if(!$bucket){
+            return $quantity.' '.$ball->name.' Ball';
         }
         $can_fill = floor($bucket->space / $ball->volume);
         
@@ -81,10 +92,11 @@ class HomeController extends Controller
         $ball_bucket->quantity = $fillable_quantity;
         $ball_bucket->save();
         $bucket->space = $bucket->space - $ball_bucket->quantity * $ball->volume;
+        $bucket->status = 'Used';
         $bucket->save();
 
-        if($remaining_quantity >= 1){
-            $this->fill_balls($ball, $remaining_quantity);
+        if($remaining_quantity > 0){
+            return $this->fill_balls($ball, $remaining_quantity);
         }
     }
 }
