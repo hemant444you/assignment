@@ -33,6 +33,7 @@ class BallController extends Controller
             if($request->name == $ball->name){
                 $rules = [
                     'name'    => 'required',
+                    'volume'    => 'required|numeric',
                 ];
             }
             $msg = 'Ball Updated';

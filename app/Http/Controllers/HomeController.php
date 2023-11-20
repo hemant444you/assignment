@@ -63,7 +63,7 @@ class HomeController extends Controller
 
     public function fill_balls($ball, $quantity)
     {
-        $bucket = Bucket::where('user_id',Auth::User()->id)->where('space', '>=', $ball->volume)->orderBy('space','asc')->first();
+        $bucket = Bucket::where('user_id',Auth::User()->id)->where('space', '>=', $ball->volume)->orderBy('space','desc')->first();
         if(!$bucket){
             return;
         }
